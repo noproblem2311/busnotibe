@@ -1,61 +1,63 @@
-from src.models import Parent
-from src.serializers.Parent.ParentSerializer import ParentSerializer
-
+from src.models.History import History
+from src.serializers.History.HistorySerializer import HistorySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 
-class ParentListView(APIView):
+class HistoryListView(APIView):
     def get(self, request):
-        parents = Parent.objects.all()
-        serializer = ParentSerializer(parents, many=True)
+        histories = History.objects.all()
+        serializer = HistorySerializer(histories, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ParentSerializer(data=request.data)
+        serializer = HistorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ParentDetailView(APIView):
+
+class HistoryDetailView(APIView):
     def get_object(self, pk):
         try:
-            return Parent.objects.get(pk=pk)
-        except Parent.DoesNotExist:
+            return History.objects.get(pk=pk)
+        except History.DoesNotExist:
             return None
 
     def get(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        history = self.get_object(pk)
+        if history is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent)
+        serializer = HistorySerializer(history)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        history = self.get_object(pk)
+        if history is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent, data=request.data)
+        serializer = HistorySerializer(history, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        history = self.get_object(pk)
+        if history is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent, data=request.data, partial=True)
+        serializer = HistorySerializer(history, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        history = self.get_object(pk)
+        if history is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        parent.delete()
+        history.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
