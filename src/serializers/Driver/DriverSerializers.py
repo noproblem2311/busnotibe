@@ -6,4 +6,4 @@ class DriverSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(read_only=True)
     class Meta:
         model = Driver
-        fields = ['id', 'user_name', 'email', 'avatar', 'date_of_birth', 'company', 'license', 'bus_number', 'language', 'created_at', 'updated_at', 'phone_number']
+        fields = ['id', 'user_name', 'email','is_verify', 'avatar', 'date_of_birth', 'company', 'license', 'bus_number', 'language', 'created_at', 'updated_at', 'phone_number']

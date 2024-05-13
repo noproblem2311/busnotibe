@@ -12,7 +12,14 @@ from .views.TabView import tab_view
 from .views.ChildView import list_child_by_parent_id
 from .views.SchoolView import SchoolDetailView,SchoolListView
 from .views.RequestView import list_request_by_parent_id
+from rest_framework.schemas import get_schema_view
+from django.views.generic import TemplateView
 urlpatterns = [
+    path('api_schema', get_schema_view(title="Busnotibe API"), name="api_schema"),
+    path('swagger-ui/',TemplateView.as_view(
+        template_name='swagger-ui.html',
+        extra_context={'schema_url':'api_schema'}  
+    ), name='swagger-ui'),
     path('parents/', ParentListView.as_view(), name='parent-list'),
     path('parents/<str:pk>/', ParentDetailView.as_view(), name='parent-detail'),
     path('drivers/', DriverListView.as_view(), name='driver-list'),
