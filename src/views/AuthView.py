@@ -35,16 +35,16 @@ def confirm_otp(request):
 
             # Thực hiện phản hồi cho thách thức mật khẩu mới yêu cầu
             response = cognito_backend.confirm_otp(email, code)
-            # if "User not found" in response:
-            #     return Response({'error': 'User not found'}, status=401)
-            # elif "Not authorized" in response:
-            #     return Response({'error': 'Not authorized'}, status=401)
-            # elif "Limit exceeded" in response:
-            #     return Response({'error': 'Limit exceeded'}, status=401)
-            # elif "Internal error" in response:
-            #     return Response({'error': 'Internal error'}, status=401)
-            # elif "An unexpected error occurred: " in response:
-            #     return Response({'error': 'An unexpected error occurred'}, status=401)
+            if "User not found" in response:
+                return Response({'error': 'User not found'}, status=401)
+            elif "Not authorized" in response:
+                return Response({'error': 'Not authorized'}, status=401)
+            elif "Limit exceeded" in response:
+                return Response({'error': 'Limit exceeded'}, status=401)
+            elif "Internal error" in response:
+                return Response({'error': 'Internal error'}, status=401)
+            elif "An unexpected error occurred: " in response:
+                return Response({'error': 'An unexpected error occurred'}, status=401)
             
             if isinstance(response, tuple):  # Nếu user là một tuple chứa thông điệp lỗi
                 error_message = response[0]  # Lấy thông điệp lỗi từ tuple

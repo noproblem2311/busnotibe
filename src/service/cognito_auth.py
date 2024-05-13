@@ -8,7 +8,7 @@ import jose.jwt
 from src.serializers.Parent.ParentSerializer import ParentSerializer
 from src.serializers.Driver.DriverSerializers import DriverSerializer
 import boto3
-from src.models import Parent
+from src.models import Parent,Driver
 User = get_user_model()
 USER_POOL_ID = "ap-southeast-2_v5GOMajxt"
 CLIENT_ID = "7trefn6t6c6o2at9cvtffeatit"
@@ -16,10 +16,31 @@ CLIENT_ID = "7trefn6t6c6o2at9cvtffeatit"
 class CognitoAuthenticationBackend(BaseBackend):
     def create_user(self, email, password, username, type):
         client = boto3.client('cognito-idp')
-
         try:
+            # Kiểm tra nếu người dùng đã tồn tại
+            response = client.admin_get_user(
+                UserPoolId=USER_POOL_ID,
+                Username=email
+            )
+
+            # Nếu người dùng đã tồn tại và chưa được xác nhận
+            if response['UserStatus'] == 'UNCONFIRMED':
+                # Xóa người dùng cũ
+                client.admin_delete_user(
+                    UserPoolId=USER_POOL_ID,
+                    Username=email
+                )
+                if type == 'parent':
+                    parent = Parent.objects.get(email=email)
+                    parent.delete()
+                elif type == 'driver':
+                    driver = Driver.objects.get(email=email)
+                    driver.delete()
+                print(f"Deleted unconfirmed user: {email}")
+
+            # Tiếp tục đăng ký người dùng mới
             response = client.sign_up(
-                ClientId= CLIENT_ID,
+                ClientId=CLIENT_ID,
                 Username=email,
                 Password=password,
                 UserAttributes=[
@@ -31,17 +52,12 @@ class CognitoAuthenticationBackend(BaseBackend):
                     # Dữ liệu xác minh khác nếu cần
                 ]
             )
-            
             print(f"User created: {response}")
-
-            
-                
             response_data = {
                 'status_code': 200,
                 'id': response['UserSub']
             }
             return response_data
-
 
         except client.exceptions.UserNotFoundException:
             print("User pool not found")
@@ -50,7 +66,7 @@ class CognitoAuthenticationBackend(BaseBackend):
         except client.exceptions.UsernameExistsException as e:
             error_message = e.response['Error']['Message']
             print(f"Username {username} already exists: {error_message}")
-            return {'error':f"Username {username} already exists: {error_message}"}
+            return {'error': f"Username {username} already exists: {error_message}"}
 
         except Exception as e:
             print(f"Error creating user: {e}")
