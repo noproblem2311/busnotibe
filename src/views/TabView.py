@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from src.serializers.History.HistorySerializer import HistorySerializer
 from src.models.Parent import Parent
 from src.models.Child import Child
+from firebase_admin.messaging import Message, Notification
+from fcm_django.models import FCMDevice
 @api_view(['POST'])
 def tab_view(request):
     serializer = TabSerializer(data=request.data)
@@ -48,8 +50,34 @@ def create_history(card_seri,type,driver_id,location):
     else:
         return Response(serializer.errors, status=400)
 def notification(data):
-    driver_id=data["driver_id"]
-    child_id=data["child_id"]
-    parent_id=data["parent_id"]
+    driver_id = data["driver_id"]
+    child_id = data["child_id"]
+    parent_id = data["parent_id"]
+    type = data["type"]
+
     parent = Parent.objects.filter(id=parent_id).first()
-    return Response({"driver_id":driver_id,"child_id":child_id,"parent_id":parent_id}, status=200)
+    device_ids = parent.device
+
+    if type == "in":
+        notification_message = Notification(
+            title="Thông báo từ ứng dụng",
+            body=f"Con bạn đã lên xe với tài xế {driver_id}",
+        )
+    elif type == "out":
+        notification_message = Notification(
+            title="Thông báo từ ứng dụng",
+            body=f"Con bạn đã xuống xe",
+        )
+    else:
+        return Response({"driver_id": driver_id, "child_id": child_id, "parent_id": parent_id}, status=200)
+
+    # Gửi thông báo đến các thiết bị của phụ huynh
+    for device_id in device_ids:
+        try:
+            device = FCMDevice.objects.get(registration_id=device_id, active=True)
+            device.send_message(Message(notification=notification_message))
+        except FCMDevice.DoesNotExist:
+            # Xử lý trường hợp thiết bị không tồn tại hoặc không hoạt động
+            pass
+
+    return Response({"message": "Đã gửi thông báo thành công"}, status=200)

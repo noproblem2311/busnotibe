@@ -18,25 +18,36 @@ class CognitoAuthenticationBackend(BaseBackend):
         client = boto3.client('cognito-idp')
         try:
             # Kiểm tra nếu người dùng đã tồn tại
-            response = client.admin_get_user(
-                UserPoolId=USER_POOL_ID,
-                Username=email
-            )
-
-            # Nếu người dùng đã tồn tại và chưa được xác nhận
-            if response['UserStatus'] == 'UNCONFIRMED':
-                # Xóa người dùng cũ
-                client.admin_delete_user(
+            try:
+                response = client.admin_get_user(
                     UserPoolId=USER_POOL_ID,
                     Username=email
                 )
-                if type == 'parent':
-                    parent = Parent.objects.get(email=email)
-                    parent.delete()
-                elif type == 'driver':
-                    driver = Driver.objects.get(email=email)
-                    driver.delete()
-                print(f"Deleted unconfirmed user: {email}")
+
+                # Nếu người dùng đã tồn tại và chưa được xác nhận
+                if response['UserStatus'] == 'UNCONFIRMED':
+                    # Xóa người dùng cũ
+                    client.admin_delete_user(
+                        UserPoolId=USER_POOL_ID,
+                        Username=email
+                    )
+                    if type == 'parent':
+                        parents = Parent.objects.filter(email=email)
+                        for parent in parents:
+                            parent.delete()
+                    elif type == 'driver':
+                        drivers = Driver.objects.filter(email=email)
+                        for driver in drivers:
+                            driver.delete()
+                    print(f"Deleted unconfirmed user: {email}")
+            except client.exceptions.UserNotFoundException as e:
+                print("User not found:", e)
+            except client.exceptions.NotAuthorizedException as e:
+                print("Not authorized:", e)
+            except client.exceptions.InternalErrorException as e:
+                print("Internal error:", e)
+            except client.exceptions.LimitExceededException as e:
+                print("Limit exceeded:", e)
 
             # Tiếp tục đăng ký người dùng mới
             response = client.sign_up(
@@ -65,8 +76,8 @@ class CognitoAuthenticationBackend(BaseBackend):
 
         except client.exceptions.UsernameExistsException as e:
             error_message = e.response['Error']['Message']
-            print(f"Username {username} already exists: {error_message}")
-            return {'error': f"Username {username} already exists: {error_message}"}
+            print(f"User already exists: {error_message}")
+            return {'error': f"User already exists: {error_message}"}
 
         except Exception as e:
             print(f"Error creating user: {e}")
@@ -88,12 +99,12 @@ class CognitoAuthenticationBackend(BaseBackend):
                 }
             )
 
-            # Nếu xác thực thành công, giải mã và trả về thông tin người dùng
-            if 'AuthenticationResult' in response:
-                return response
+            # # Nếu xác thực thành công, giải mã và trả về thông tin người dùng
+            # if 'AuthenticationResult' in response:
+            #     return response
             
-            else:
-                return response
+            # else:
+            return response
 
         except client.exceptions.NotAuthorizedException as e:
             print("Not authorized:", e)

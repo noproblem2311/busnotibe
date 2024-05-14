@@ -7,7 +7,7 @@ from .views.RequestView import RequestListView, RequestDetailView
 from .views.TemplateView import TemplateListView, TemplateDetailView
 from .views.ChildView import ChildListView, ChildDetailView
 from .views.AuthView import forgot_password_view, confirm_forgot_password_view, resend_confirmation_code
-from .views.HistoryView import HistoryListView, HistoryDetailView
+from .views.HistoryView import HistoryListView, HistoryDetailView,list_tracking_by_parent_id
 from .views.TabView import tab_view
 from .views.ChildView import list_child_by_parent_id
 from .views.SchoolView import SchoolDetailView,SchoolListView
@@ -44,4 +44,5 @@ urlpatterns = [
     path('schools/', SchoolListView.as_view(), name='school-list'),
     path('schools/<str:pk>/', SchoolDetailView.as_view(), name='school-detail'),
     path('resendconfirmationcode/', resend_confirmation_code, name='resend_confirmation_code'),
+    path('listtracking/<str:pk>/', list_tracking_by_parent_id, name='list_tracking_by_parent_id'),
 ]
