@@ -8,7 +8,7 @@ import jose.jwt
 from src.serializers.Parent.ParentSerializer import ParentSerializer
 from src.serializers.Driver.DriverSerializers import DriverSerializer
 import boto3
-from src.models import Parent,Driver
+from src.models import Parent,Driver,Admin
 User = get_user_model()
 USER_POOL_ID = "ap-southeast-2_v5GOMajxt"
 CLIENT_ID = "7trefn6t6c6o2at9cvtffeatit"
@@ -39,6 +39,11 @@ class CognitoAuthenticationBackend(BaseBackend):
                         drivers = Driver.objects.filter(email=email)
                         for driver in drivers:
                             driver.delete()
+                    elif type == 'admin':
+                        admins = Admin.objects.filter(email=email)
+                        for admin in admins:
+                            admin.delete()
+                        
                     print(f"Deleted unconfirmed user: {email}")
             except client.exceptions.UserNotFoundException as e:
                 print("User not found:", e)

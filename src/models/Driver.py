@@ -8,7 +8,7 @@ class Driver(models.Model):
     email = models.TextField()
     avatar = models.TextField(null=True)
     date_of_birth = models.DateTimeField(null=True)
-    company = models.TextField(null=True)
+    company_id = models.UUIDField(null=True)
     license = models.TextField(null=True)
     bus_number = models.TextField(null=True)
     phone_number = models.TextField(null=True)

@@ -74,3 +74,27 @@ def list_request_by_parent_id(request, pk):
         return Response(serializer.data)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    
+@api_view(['GET'])
+def search_requests(request):
+    field = request.query_params.get('field')
+    key = request.query_params.get('key')
+
+    # List of allowed fields for searching
+    allowed_fields = {
+        'status', 'id', 'parent_id', 'admin_id', 'address', 'template_id', 'email', 
+        'zip_postal', 'note', 'phone_number', 'shipping_by', 'shipping_code', 'name'
+    }
+
+    if not field or not key:
+        return Response({'detail': 'Field and key parameters are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if field not in allowed_fields:
+        return Response({'detail': f'Invalid field parameter: {field}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Use __icontains for text fields to allow partial matching
+    query_filter = {f"{field}__icontains": key}
+    requests = Request.objects.filter(**query_filter)
+    serializer = RequestSerializer(requests, many=True)
+    return Response(serializer.data)

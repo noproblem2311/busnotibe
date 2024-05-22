@@ -3,6 +3,7 @@ from src.serializers.Driver.DriverSerializers import DriverSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view
 
 class DriverListView(APIView):
     def get(self, request):
@@ -57,3 +58,26 @@ class DriverDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         driver.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+@api_view(['GET'])
+def search_requests_driver(request):
+    field = request.query_params.get('field')
+    key = request.query_params.get('key')
+
+    # List of allowed fields for searching
+    allowed_fields = {
+       'id', 'user_name', 'email', 'phone_number', 'date_of_birth', 'company_id', 'license', 'bus_number', 'language'
+    }
+
+    if not field or not key:
+        return Response({'detail': 'Field and key parameters are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if field not in allowed_fields:
+        return Response({'detail': f'Invalid field parameter: {field}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Use __icontains for text fields to allow partial matching
+    query_filter = {f"{field}__icontains": key}
+    requests = Driver.objects.filter(**query_filter)
+    serializer = DriverSerializer(requests, many=True)
+    return Response(serializer.data)

@@ -2,6 +2,7 @@ import json
 from django.shortcuts import render, redirect
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from src.models import Admin
 from src.serializers.auth.ForgotPasswordSerializer import ForgotPasswordSerializer, ConfirmForgotPasswordSerializer
 from src.helper.AddNewUserAfterSignUp import create_new_user
 from src.service.cognito_auth import CognitoAuthenticationBackend
@@ -90,13 +91,20 @@ def login_view(request):
                             'avatar': driver.avatar,
                             'user_name': driver.user_name,
                             'date_of_birth': driver.date_of_birth,
-                            'company': driver.company,
+                            'company_id': driver.company_id,
                             'license': driver.license,
                             'phone_number': driver.phone_number,
                             'bus_number': driver.bus_number,
                             'language': driver.language,
                         }
-
+                elif type== 'admin':
+                    admin = Admin.objects.filter(email=email).first()
+                    if admin:
+                        user['user'] = {
+                            'id': admin.id,
+                            'email': admin.email,
+                            'user_name': admin.user_name,
+                        }
                 return Response(user, status=200)
             
             if 'ChallengeName' in user and user['ChallengeName']:
@@ -130,7 +138,7 @@ def signup_view(request):
                 return Response(response)
             # Trả về phản hồi thành công sau khi đăng ký
             if 'error' in response:
-                return Response(response['error'], status=400)
+                return Response(response, status=400)
         else:
             # Dữ liệu không hợp lệ, trả về phản hồi lỗi
             return Response(serializer.errors, status=400)

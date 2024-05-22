@@ -77,24 +77,26 @@ def list_tracking_by_parent_id(request, pk):
     history_by_child = []
     for child in list_child_of_parent:
         form_data = {
-            "id":"",
+            "id": "",
             'child_id': "",
-            "driver_avatar":"",
-            "driver_name":"",
-            "origin_position_name":"",
-            "target_position_name":"",
+            "driver_avatar": "",
+            "driver_name": "",
+            "origin_position_name": "",
+            "target_position_name": "",
             'child_name': "",
             'driver_id': "",
             "date": "",
             "bus_number": "",
             "get_on": {
                 "time": "",
-                "position":"",
-                "message":""
-                },
-            "get_off": {"time": "",
-                "position":"",
-                "message":""},
+                "position": "",
+                "message": ""
+            },
+            "get_off": {
+                "time": "",
+                "position": "",
+                "message": ""
+            },
             "tracking_id": ""
         }
         latest_histories = History.objects.filter(child_id=child.id).order_by('-created_at')[:2]
@@ -108,8 +110,7 @@ def list_tracking_by_parent_id(request, pk):
             if driver:
                 form_data["bus_number"] = driver.bus_number
                 form_data["driver_name"] = driver.user_name
-                form_data["driver_avatar"]= driver.avatar
-                
+                form_data["driver_avatar"] = driver.avatar
             else:
                 return Response({"error": f"No driver found for child {child.id}"}, status=status.HTTP_404_NOT_FOUND)
             form_data["tracking_id"] = latest_history.id
@@ -121,34 +122,34 @@ def list_tracking_by_parent_id(request, pk):
                 form_data["get_on"] = {"time": latest_history.created_at, "position": latest_history.location}
                 current_time = timezone.now()
                 if current_time - latest_history.created_at > timedelta(minutes=600):
-                    form_data["get_off"] = {"time":"", "position":"","message": "your child forgot to get off"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "your child forgot to get off"}
                 else:
-                    form_data["get_off"] = {"time":"", "position":"","message": "on bus"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "on bus"}
             else:
                 form_data["get_off"] = {"time": latest_history.created_at, "position": latest_history.location}
-                form_data["get_on"] = {"message": "your child forgot to get on"}
+                form_data["get_on"] = {"time": "", "position": "", "message": "your child forgot to get on"}
         elif len(latest_histories) == 2:
             latest_history_1, latest_history_2 = latest_histories
             if latest_history_1.type == "in" and latest_history_2.type == "out":
-                form_data["get_on"] = {"time": latest_history_1.created_at, "position": latest_history_1.location,"message":""}
-                form_data["get_off"] = {"time": latest_history_2.created_at, "position": latest_history_2.location}
+                form_data["get_on"] = {"time": latest_history_1.created_at, "position": latest_history_1.location, "message": ""}
+                form_data["get_off"] = {"time": latest_history_2.created_at, "position": latest_history_2.location, "message": ""}
             elif latest_history_1.type == "out" and latest_history_2.type == "in":
-                form_data["get_on"] = {"time": latest_history_2.created_at, "position": latest_history_2.location}
-                current_time = timezone.now()  # Khởi tạo biến current_time
+                form_data["get_on"] = {"time": latest_history_2.created_at, "position": latest_history_2.location, "message": ""}
+                current_time = timezone.now()
                 if current_time - latest_history_2.created_at > timedelta(minutes=600):
-                    form_data["get_off"] = {"message": "your child forgot to get off"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "your child forgot to get off"}
                 else:
-                    form_data["get_off"] = {"message": "on bus"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "on bus"}
             elif latest_history_1.type == "in" and latest_history_2.type == "in":
-                form_data["get_on"] = {"time": latest_history_2.created_at, "position": latest_history_2.location}
-                current_time = timezone.now()  # Khởi tạo biến current_time
+                form_data["get_on"] = {"time": latest_history_2.created_at, "position": latest_history_2.location, "message": ""}
+                current_time = timezone.now()
                 if current_time - latest_history_1.created_at > timedelta(minutes=600):
-                    form_data["get_off"] = {"message": "your child forgot to get off"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "your child forgot to get off"}
                 else:
-                    form_data["get_off"] = {"message": "on bus"}
+                    form_data["get_off"] = {"time": "", "position": "", "message": "on bus"}
             elif latest_history_1.type == "out" and latest_history_2.type == "out":
-                form_data["get_off"] = {"time": latest_history_2.created_at, "position": latest_history_2.location}
-                form_data["get_on"] = {"message": "your child forgot to get on"}
-        if form_data['driver_id'] !="":
+                form_data["get_off"] = {"time": latest_history_2.created_at, "position": latest_history_2.location, "message": ""}
+                form_data["get_on"] = {"time": "", "position": "", "message": "your child forgot to get on"}
+        if form_data['driver_id'] != "":
             history_by_child.append(form_data)
     return Response(history_by_child)

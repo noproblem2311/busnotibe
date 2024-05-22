@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import firebase_admin
 from firebase_admin import initialize_app,credentials
 
 from pathlib import Path
@@ -37,11 +38,13 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'corsheaders',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'src',
     'rest_framework',
     "fcm_django",
+    
 
 ]
 
@@ -53,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'busnoti_be.urls'
@@ -75,9 +80,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'busnoti_be.wsgi.application'
 
-# credential_path = os.path.join(BASE_DIR, 'path/to/serviceAccountKey.json')
-# cred = credentials.Certificate(credential_path)
-# FIREBASE_APP = initialize_app(cred)
+# Đường dẫn đến tệp tin JSON chứa khóa dịch vụ Firebase
+json_path = os.path.join(BASE_DIR, 'serviceAccountKey.json')
+
+# Sử dụng credentials.Certificate() để tạo chứng chỉ từ tệp tin JSON
+cred = credentials.Certificate(json_path)
+
+# Khởi tạo ứng dụng Firebase với chứng chỉ vừa tạo
+firebase_app = initialize_app(cred)
+
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -121,7 +132,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+CORS_ORIGIN_ALLOW_ALL = False
 
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',
+    'https://bus-admin-predeploy.vercel.app',
+    'http://127.0.0.1:5500'
+)
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -133,17 +152,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 APPEND_SLASH = True
-# FCM_DJANGO_SETTINGS = {
-#      # an instance of firebase_admin.App to be used as default for all fcm-django requests
-#      # default: None (the default Firebase app)
-#     "DEFAULT_FIREBASE_APP": None,
-#      # default: _('FCM Django')
-#     "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
-#      # true if you want to have only one active device per registered user at a time
-#      # default: False
-#     "ONE_DEVICE_PER_USER": True/False,
-#      # devices to which notifications cannot be sent,
-#      # are deleted upon receiving error response from FCM
-#      # default: False
-#     "DELETE_INACTIVE_DEVICES": True/False,
-# }
+FCM_DJANGO_SETTINGS = {
+     # an instance of firebase_admin.App to be used as default for all fcm-django requests
+     # default: None (the default Firebase app)
+    "DEFAULT_FIREBASE_APP": None,
+     # default: _('FCM Django')
+    "APP_VERBOSE_NAME": "[string for AppConfig's verbose_name]",
+     # true if you want to have only one active device per registered user at a time
+     # default: False
+    "ONE_DEVICE_PER_USER": False,
+     # devices to which notifications cannot be sent,
+     # are deleted upon receiving error response from FCM
+     # default: False
+    "DELETE_INACTIVE_DEVICES": False,
+}

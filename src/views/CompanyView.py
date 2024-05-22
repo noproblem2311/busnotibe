@@ -1,76 +1,79 @@
-from src.models import Parent
-from src.serializers.Parent.ParentSerializer import ParentSerializer
-from rest_framework.decorators import api_view
-
+import uuid
+from src.models.Company import Company
+from src.serializers.Company.CompanySerializer import CompanySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view
 
-
-class ParentListView(APIView):
+class CompanyListView(APIView):
     def get(self, request):
-        parents = Parent.objects.all()
-        serializer = ParentSerializer(parents, many=True)
+        companies = Company.objects.all()
+        serializer = CompanySerializer(companies, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ParentSerializer(data=request.data)
+        datacurrent= request.data
+        datacurrent['id'] = str(uuid.uuid4())
+        serializer = CompanySerializer(data=datacurrent)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ParentDetailView(APIView):
+class CompanyDetailView(APIView):
     def get_object(self, pk):
         try:
-            return Parent.objects.get(pk=pk)
-        except Parent.DoesNotExist:
+            return Company.objects.get(pk=pk)
+        except Company.DoesNotExist:
             return None
 
     def get(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        company = self.get_object(pk)
+        if company is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent)
+        serializer = CompanySerializer(company)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        company = self.get_object(pk)
+        if company is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent, data=request.data)
+        serializer = CompanySerializer(company, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        company = self.get_object(pk)
+        if company is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ParentSerializer(parent, data=request.data, partial=True)
+        serializer = CompanySerializer(company, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        parent = self.get_object(pk)
-        if parent is None:
+        company = self.get_object(pk)
+        if company is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        parent.delete()
+        company.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     
+    
+    
 @api_view(['GET'])
-def search_requests_parent(request):
+def search_requests_company(request):
     field = request.query_params.get('field')
     key = request.query_params.get('key')
 
     # List of allowed fields for searching
     allowed_fields = {
-       'id', 'user_name', 'email','date_of_birth', 'language'
-    }
+    'name_en', 'name_cn'
+        }
 
     if not field or not key:
         return Response({'detail': 'Field and key parameters are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -80,6 +83,6 @@ def search_requests_parent(request):
 
     # Use __icontains for text fields to allow partial matching
     query_filter = {f"{field}__icontains": key}
-    requests = Parent.objects.filter(**query_filter)
-    serializer = ParentSerializer(requests, many=True)
+    requests = Company.objects.filter(**query_filter)
+    serializer = CompanySerializer(requests, many=True)
     return Response(serializer.data)
