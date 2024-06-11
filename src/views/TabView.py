@@ -65,61 +65,6 @@ def create_history(card_seri, type, driver_id, location):
     else:
         return Response(serializer.errors, status=400)
 
-# def notification(data, driver_id):
-#     child_id = data["child_id"]
-#     parent_id = data["parent_id"]
-#     type = data["type"]
-#     parent = Parent.objects.filter(id=parent_id).first()
-#     device_ids = parent.device
-
-#     # Kiểm tra nếu device_ids là một chuỗi, chuyển đổi nó thành một list
-#     if isinstance(device_ids, str):
-#         device_ids = [device_ids]
-
-#     if type == "in":
-#         notification_message = Notification(
-#             title="Thông báo từ ứng dụng",
-#             body=f"Con bạn đã lên xe với tài xế {driver_id}",
-#         )
-#     elif type == "out":
-#         notification_message = Notification(
-#             title="Thông báo từ ứng dụng",
-#             body=f"Con bạn đã xuống xe",
-#         )
-#     else:
-#         return Response({"driver_id": driver_id, "child_id": child_id, "parent_id": parent_id}, status=200)
-#     for device_id in device_ids:
-#         try:
-#         # Lấy tất cả các thiết bị FCM có registration_id nằm trong danh sách device_ids
-#             devices = FCMDevice.objects.filter(registration_id__in=device_id, active=True)
-
-#             # Gửi thông báo đến các thiết bị
-#             response = devices.send_message(Message(notification=notification_message))
-
-#             # Kiểm tra kết quả của việc gửi thông báo
-#             # Xử lý response để lấy thông tin chi tiết hơn về quá trình gửi thông báo
-#             if response.results:
-#                 # response.results cho biết kết quả gửi thông báo cho mỗi thiết bị cụ thể
-#                 for idx, result in enumerate(response.results):
-#                     if 'error' in result:
-#                         # Xử lý trường hợp gửi thông báo thất bại cho thiết bị thứ idx
-#                         print(f"Thông báo không thể gửi đến thiết bị {device_ids[idx]}: {result['error']}")
-
-#             if response.failed_registration_ids:
-#                 # response.failed_registration_ids cho biết danh sách các registration_ids mà thông báo không thể gửi đến
-#                 for reg_id in response.failed_registration_ids:
-#                     print(f"Thông báo không thể gửi đến thiết bị với registration_id: {reg_id}")
-
-#             if response.canonical_registration_ids:
-#                 # response.canonical_registration_ids cho biết danh sách các registration_ids đã được cập nhật
-#                 for old_id, new_id in response.canonical_registration_ids.items():
-#                     print(f"Registration_id cũ {old_id} đã được cập nhật thành {new_id}")
-
-#             # Trả về kết quả thành công
-#             return Response({"message": "Đã gửi thông báo thành công"}, status=200)
-#         except Exception as e:
-#             # Xử lý trường hợp gửi thông báo thất bại
-#             return Response({"message": str(e)}, status=400)
 
 def notification(data, driver_id):
     child_id = data["child_id"]

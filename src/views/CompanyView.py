@@ -86,3 +86,4 @@ def search_requests_company(request):
     requests = Company.objects.filter(**query_filter)
     serializer = CompanySerializer(requests, many=True)
     return Response(serializer.data)
+

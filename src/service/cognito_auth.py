@@ -69,9 +69,13 @@ class CognitoAuthenticationBackend(BaseBackend):
                 ]
             )
             print(f"User created: {response}")
+            user_was_created = client.admin_get_user(
+                    UserPoolId=USER_POOL_ID,
+                    Username=email
+                )
             response_data = {
                 'status_code': 200,
-                'id': response['UserSub']
+                'id': user_was_created.get('Username'),
             }
             return response_data
 

@@ -10,7 +10,7 @@ from .views.AuthView import forgot_password_view, confirm_forgot_password_view, 
 from .views.HistoryView import HistoryListView, HistoryDetailView,list_tracking_by_parent_id
 from .views.TabView import tab_view
 from .views.ChildView import list_child_by_parent_id
-from .views.SchoolView import SchoolDetailView,SchoolListView
+from .views.SchoolView import SchoolDetailView,SchoolListView,search_requests_school
 from .views.RequestView import list_request_by_parent_id, search_requests
 from rest_framework.schemas import get_schema_view
 from django.views.generic import TemplateView
@@ -59,6 +59,7 @@ urlpatterns = [
     path('listrequest/<str:pk>/', list_request_by_parent_id, name='list_request_by_parent_id'),
     
     path('schools/', SchoolListView.as_view(), name='school-list'),
+    path('schools/search/', search_requests_school, name='school-search'),
     path('schools/<str:pk>/', SchoolDetailView.as_view(), name='school-detail'),
     
     path('resendconfirmationcode/', resend_confirmation_code, name='resend_confirmation_code'),
