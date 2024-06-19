@@ -5,8 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-.serviceAccountKey.json
-.zappa_settings.json
+
 # Distribution / packaging
 .Python
 env/
@@ -126,3 +125,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.env.local
+.serviceAccountKey.json
+.zappa_settings.json
