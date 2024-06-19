@@ -17,6 +17,7 @@ from django.views.generic import TemplateView
 from .views.AdminView import AdminListView, AdminDetailView
 from .views.CompanyView import CompanyListView, CompanyDetailView, search_requests_company
 from .views.NotificationView import NotificationListView,  NotificationDetailView, list_notification_by_parent_id, change_all_is_read_to_true_by_parent_id
+from .views.UserKeyView import  UserKeyDetailView,UserKeyView, delete_by_key
 urlpatterns = [
     path('api_schema', get_schema_view(title="Busnotibe API",url='/dev/'), name="api_schema"),
     path('swagger-ui/',TemplateView.as_view(
@@ -77,4 +78,8 @@ urlpatterns = [
     path('notification/list/<str:pk>/', list_notification_by_parent_id, name='list_notification_by_parent_id'),
     path('notification/read-all/<str:pk>/', change_all_is_read_to_true_by_parent_id, name='change_all_is_read_to_true_by_parent_id'),
     
+    path('userkey/', UserKeyView.as_view(), name='userkey-list'),
+    path('userkey/delete/<str:pk>/', delete_by_key, name='delete_by_key'),
+    path('userkey/<str:pk>/', UserKeyDetailView.as_view(), name='userkey-detail'),
+
 ]

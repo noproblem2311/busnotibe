@@ -6,3 +6,4 @@ from .Child import Child
 from .School import School
 from .Admin import Admin
 from .Notification import Notification
+from .UserKey import UserKey

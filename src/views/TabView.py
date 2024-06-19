@@ -9,10 +9,15 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from src.serializers.History.HistorySerializer import HistorySerializer
 from src.models.Parent import Parent
+from src.models.UserKey import UserKey
 from src.models.Child import Child
 from firebase_admin.messaging import Message, Notification
 from fcm_django.models import FCMDevice
 from src.serializers.Notification.NotificationSerializer import NotificationSerializer
+import onesignal
+from onesignal.api import default_api
+from onesignal.model.notification import Notification
+
 @api_view(['POST'])
 def tab_view(request):
     serializer = TabSerializer(data=request.data)
@@ -22,14 +27,13 @@ def tab_view(request):
         driver_id = serializer.validated_data.get('driver_id')
         
         location = serializer.validated_data.get('location')
-        print("tab_view_test: ", card_seri, type, driver_id, location)
         try:
             driver = Driver.objects.filter(id=driver_id).first()
             if driver.is_verify == False:
                 return Response({"message": "Driver is not verify"}, status=400)
             response = create_history(card_seri, type, driver_id, location)
             if response.status_code == 200:
-                response_noti = notification(response.data, driver_id)
+                response_noti = push_notification(response.data, driver_id)
                 if response_noti.status_code == 200:
                     return Response(response.data, status=200)
                 else:
@@ -66,70 +70,60 @@ def create_history(card_seri, type, driver_id, location):
         return Response(serializer.errors, status=400)
 
 
-def notification(data, driver_id):
+def push_notification(data, driver_id):
+    configuration = onesignal.Configuration(
+    app_key = "OTFmMTA5Y2YtYWNlNC00M2VlLWJlYmUtMjQyMDhhZDhkN2M3",
+    user_key = "ZTQyYWNjMTItNGU0NC00ZTdhLWFhYzYtZDFjYWE3ODBlNjAw"
+    )
     child_id = data["child_id"]
     parent_id = data["parent_id"]
     type = data["type"]
     parent = Parent.objects.filter(id=parent_id).first()
     
-    device_ids = parent.device
+    list_device_key = UserKey.objects.filter(user_id=parent.id).all()
     child = Child.objects.filter(id=child_id).first()
     driver = Driver.objects.filter(id=driver_id).first()
     if driver.is_verify == False:
         return Response({"message": "Driver is not verify"}, status=400)
-    # Kiểm tra nếu device_ids là một chuỗi, chuyển đổi nó thành một list
-    if isinstance(device_ids, str):
-        device_ids = [device_ids]
-        
-
-    # Tạo thông báo dựa trên loại (type)
+    # Create an API client with the configuration
+    client = onesignal.ApiClient(configuration)
+    api_instance = default_api.DefaultApi(client)
+    
     if type == "in":
-        notification_message = {
-            "title": "Thông báo từ ứng dụng",
-            "body": f"{child.name} bạn đã lên xe, tài xế: {driver.user_name}, số xe: {driver.bus_number}",
-        }
+        heading =  {"en": f"{child.name} has arrived on the bus"}
+        content =  {"en": f"{child.name} has arrived on the bus, driver: {driver.user_name}, bus number: {driver.bus_number}"}
     elif type == "out":
-        notification_message = {
-            "title": "Thông báo từ ứng dụng",
-            "body": f"{child.name} đã xuống xe, tài xế {driver.user_name}, số xe: {driver.bus_number}",
-        }
+        heading =  {"en": f"{child.name} has departed from the bus"}
+        content =  {"en": f"{child.name} has disembarked from the bus, driver: {driver.user_name}, bus number: {driver.bus_number}"}
     else:
         return Response({"message": "Invalid notification type"}, status=400)
-
-    # Gửi thông báo đến từng thiết bị
-    for device_id in device_ids:
+    
+    for device_key in list_device_key:
         try:
-            # Tạo payload
-            payload = {
-                "to": device_id,
-                "notification": notification_message
-            }
-
-            # Tạo headers
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": "key=AAAAw5nxWmM:APA91bG8DnxTg7wASeboLgi2GuQBjxaTzNsn1KDf9gKGopeWDTxx1dhMvsfr800GR3LCYJEtEFHU1eb_MD59aqqsEfh4dfqohmvcpboJeNOiQyfYkF3-d8kUGbE6LdUFOPGnxChciJAu"
-            }
-
-            # Gửi request
-            response = requests.post("https://fcm.googleapis.com/fcm/send", json=payload, headers=headers)
-
-            # Kiểm tra kết quả của request
-            if response.status_code == 200:
+            notification = Notification(
+                app_id="048155db-be80-4925-b5fd-4625451686f3",
+                # include_player_ids=[device_key.key],
+                include_player_ids=[device_key.key],
+                headings=heading,
+                contents=content,
+            )
+            
+            api_response = api_instance.create_notification(notification)
+            
+            if api_response.id:
                 noti_data={
                     "id": str(uuid.uuid4()),
                     "parent_id": parent_id,
-                    "title": notification_message["title"],
-                    "body": notification_message["body"],
+                    "title": heading["en"],
+                    "body": content["en"],
                 }
                 serializer = NotificationSerializer(data=noti_data)
                 if serializer.is_valid():
                     serializer.save()
                 else:
                     return Response(serializer.errors, status=400)
-                return Response({"message": "Đã gửi thông báo thành công"}, status=200)
-            
-            else:
-                return Response({"message": f"Gửi thông báo thất bại, mã lỗi: {response.status_code}"}, status=response.status_code)
-        except Exception as e:
-            return Response({"message": str(e)}, status=400)
+            print(f"Notification sent: {api_response}")
+        except onesignal.ApiException as e:
+            return Response({"message": f"Exception when calling OneSignal API: {str(e)}"}, status=400)
+    
+    return Response({"message": "Notifications sent successfully"}, status=200)
